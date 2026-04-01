@@ -23,7 +23,7 @@ export default function FileUpload({ onValidationComplete, onValidationStart }) 
     }
 
     setIsLoading(true);
-    onValidationStart?.();
+    onValidationStart?.(file);
     setStatus(`Uploading ${file.name}...`);
 
     try {
@@ -54,7 +54,7 @@ export default function FileUpload({ onValidationComplete, onValidationStart }) 
         throw new Error(validationData.detail || "Validation failed");
       }
 
-      onValidationComplete?.(validationData);
+      onValidationComplete?.({ file, uploadData, validationData });
       setStatus(`Validation complete for ${file.name}.`);
     } catch (error) {
       onValidationComplete?.(null);
