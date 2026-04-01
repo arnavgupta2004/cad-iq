@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routes.rules import router as rules_router
 from routes.upload import router as upload_router
+from routes.validate import router as validate_router
 from services.rag_engine import initialize_knowledge_base
 
 
@@ -26,6 +27,7 @@ app.add_middleware(
 
 app.include_router(upload_router)
 app.include_router(rules_router)
+app.include_router(validate_router)
 
 
 @app.get("/")
