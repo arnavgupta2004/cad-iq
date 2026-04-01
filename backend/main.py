@@ -1,10 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.rules import router as rules_router
 from routes.upload import router as upload_router
+from services.rag_engine import initialize_knowledge_base
 
 
-app = FastAPI(title="CAD-IQ Backend")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    initialize_knowledge_base()
+    yield
+
+
+app = FastAPI(title="CAD-IQ Backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(upload_router)
+app.include_router(rules_router)
 
 
 @app.get("/")

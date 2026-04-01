@@ -1,0 +1,25 @@
+Minimum wall thickness for injection molded plastic parts is 1.5mm to 4.5mm depending on material
+Draft angle for vertical walls in molded or cast parts must be at least 1 degree
+Internal corner fillet radius must be minimum 0.5mm to avoid stress concentrations
+Hole diameter must be at least equal to the wall thickness of the part
+Sharp edges with radius less than 0.3mm on exterior surfaces must be avoided
+Rib height should not exceed 3 times the nominal wall thickness
+Rib thickness at base should be 50 to 70 percent of nominal wall thickness
+Boss outer diameter should be at least 2 times the hole diameter
+Minimum thread engagement length must be 1.5 times the thread diameter
+Surface finish Ra value must be specified for all mating and sealing surfaces
+Tolerance stack-up analysis is mandatory for assemblies with more than 3 mating parts
+Undercuts must be avoided in the primary draw direction for molded parts
+Parting line location must be defined and must not pass through critical surfaces
+Weld lines must not occur in high stress or load bearing regions
+Gate location for injection molding must be at the thickest section of the part
+Uniform wall thickness must be maintained to avoid sink marks and warpage
+Minimum hole depth to diameter ratio must not exceed 4 for blind holes
+Chamfer or radius must be added to all leading edges for assembly ease
+All brackets must have minimum 2 mounting points with adequate bolt boss design
+Material specification and grade must be called out on every component drawing
+GD&T symbols must be used for all critical features per ASME Y14.5 standard
+Flatness tolerance on mating surfaces must not exceed 0.1mm per 100mm length
+Symmetry must be enforced on mirrored features to avoid assembly errors
+All fastener holes must have positional tolerance called out using true position GD&T
+Minimum clearance between adjacent components in assembly must be 0.5mm
