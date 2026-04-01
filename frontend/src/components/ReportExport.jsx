@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import toast from "react-hot-toast";
 
 function writeWrappedLine(doc, text, x, y, maxWidth, lineHeight) {
   const lines = doc.splitTextToSize(text, maxWidth);
@@ -9,6 +10,7 @@ function writeWrappedLine(doc, text, x, y, maxWidth, lineHeight) {
 export default function ReportExport({ validation }) {
   function exportPdf() {
     if (!validation) {
+      toast.error("No validation report available yet.");
       return;
     }
 
@@ -67,6 +69,7 @@ export default function ReportExport({ validation }) {
     }
 
     doc.save("cadiq-validation-report.pdf");
+    toast.success("PDF report exported.");
   }
 
   return (
@@ -75,7 +78,7 @@ export default function ReportExport({ validation }) {
         type="button"
         onClick={exportPdf}
         disabled={!validation}
-        className="rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
+        className="rounded-2xl bg-[#4f8ef7] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6aa0f8] disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-[#9ca3af]"
       >
         Export PDF Report
       </button>

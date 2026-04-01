@@ -2,7 +2,7 @@
 
 :root {
   font-family: Inter, system-ui, sans-serif;
-  color: #f8fafc;
+  color: #ffffff;
   background: #0f1117;
 }
 
@@ -10,13 +10,16 @@
   box-sizing: border-box;
 }
 
-html {
+html,
+body,
+#root {
+  min-height: 100%;
   background: #0f1117;
 }
 
 body {
   margin: 0;
-  background: #0f1117;
+  color: #ffffff;
 }
 
 button,
@@ -24,6 +27,10 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+::selection {
+  background: rgba(79, 142, 247, 0.35);
 }
 
 @keyframes fadeIn {
@@ -35,5 +42,15 @@ select {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 200% 50%;
   }
 }
