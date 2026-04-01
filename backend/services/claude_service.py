@@ -35,6 +35,7 @@ PROMPT_TEMPLATE = """You are a senior automotive design validation engineer with
          ]
        }}
        If no violations found, return an empty violations array and score of 100."""
+CHAT_SYSTEM_PROMPT = "You are CAD-IQ, an expert automotive design assistant. You have already analyzed the user's CAD design and found the following results: {validation_result}. The design metadata is: {design_metadata}. Answer the engineer's questions helpfully and concisely. Always refer to specific findings from the validation report when relevant."
 
 
 class ValidationError(Exception):
@@ -44,10 +45,15 @@ class ValidationError(Exception):
         self.status_code = status_code
 
 
-def validate_design(design_metadata: dict[str, Any], relevant_rules: list[str]) -> dict[str, Any]:
+def _ensure_api_key() -> None:
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValidationError("GEMINI_API_KEY is not set", status_code=500)
+    genai.configure(api_key=api_key)
+
+
+def validate_design(design_metadata: dict[str, Any], relevant_rules: list[str]) -> dict[str, Any]:
+    _ensure_api_key()
 
     prompt = PROMPT_TEMPLATE.format(
         design_metadata=json.dumps(design_metadata, indent=2, sort_keys=True),
@@ -76,3 +82,43 @@ def validate_design(design_metadata: dict[str, Any], relevant_rules: list[str]) 
         raise ValidationError("Gemini API returned invalid JSON", status_code=502) from exc
 
     return parsed
+
+
+def chat_with_context(
+    message: str,
+    design_metadata: dict[str, Any],
+    validation_result: dict[str, Any],
+    conversation_history: list[dict[str, str]],
+) -> tuple[str, list[dict[str, str]]]:
+    _ensure_api_key()
+
+    system_prompt = CHAT_SYSTEM_PROMPT.format(
+        validation_result=json.dumps(validation_result, sort_keys=True),
+        design_metadata=json.dumps(design_metadata, sort_keys=True),
+    )
+
+    contents = []
+    updated_history: list[dict[str, str]] = []
+    for item in conversation_history:
+        role = item.get("role")
+        text = item.get("content")
+        if role not in {"user", "model"} or not isinstance(text, str) or not text.strip():
+            continue
+        contents.append({"role": role, "parts": [text]})
+        updated_history.append({"role": role, "content": text})
+
+    contents.append({"role": "user", "parts": [message]})
+    updated_history.append({"role": "user", "content": message})
+
+    try:
+        model = genai.GenerativeModel(MODEL_NAME, system_instruction=system_prompt)
+        response = model.generate_content(contents)
+    except Exception as exc:
+        raise ValidationError("Failed to get chat response from Gemini API", status_code=502) from exc
+
+    reply = getattr(response, "text", "").strip()
+    if not reply:
+        raise ValidationError("Gemini API returned an empty chat response", status_code=502)
+
+    updated_history.append({"role": "model", "content": reply})
+    return reply, updated_history

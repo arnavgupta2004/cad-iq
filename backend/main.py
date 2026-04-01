@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.chat import router as chat_router
 from routes.rules import router as rules_router
 from routes.upload import router as upload_router
 from routes.validate import router as validate_router
@@ -28,6 +29,7 @@ app.add_middleware(
 app.include_router(upload_router)
 app.include_router(rules_router)
 app.include_router(validate_router)
+app.include_router(chat_router)
 
 
 @app.get("/")
