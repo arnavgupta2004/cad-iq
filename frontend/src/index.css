@@ -3,9 +3,37 @@
 :root {
   font-family: Inter, system-ui, sans-serif;
   color: #f8fafc;
-  background: #020617;
+  background: #0f1117;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #0f1117;
 }
 
 body {
   margin: 0;
+  background: #0f1117;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
