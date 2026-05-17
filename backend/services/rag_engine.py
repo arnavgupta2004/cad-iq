@@ -19,7 +19,7 @@ _collection = None
 
 
 def get_embedding(text: str):
-    response = genai.embed_content(model="models/embedding-001", content=text)
+    response = genai.embed_content(model="models/text-embedding-004", content=text)
     return response["embedding"]
 
 
