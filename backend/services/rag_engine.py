@@ -6,23 +6,21 @@ from pathlib import Path
 from typing import Any
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+import google.generativeai as genai
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 KNOWLEDGE_BASE_PATH = BASE_DIR / "knowledge_base" / "design_rules.txt"
 CHROMA_DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(BASE_DIR / "chroma_db")))
 COLLECTION_NAME = "design_rules"
-MODEL_NAME = "all-MiniLM-L6-v2"
 
-_model: SentenceTransformer | None = None
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
 _collection = None
 
 
-def _get_model() -> SentenceTransformer:
-    global _model
-    if _model is None:
-        _model = SentenceTransformer(MODEL_NAME)
-    return _model
+def get_embedding(text: str):
+    response = genai.embed_content(model="models/embedding-001", content=text)
+    return response["embedding"]
 
 
 def _get_collection():
@@ -36,24 +34,23 @@ def _get_collection():
 def _load_rules() -> list[str]:
     if not KNOWLEDGE_BASE_PATH.exists():
         raise FileNotFoundError(f"Knowledge base file not found: {KNOWLEDGE_BASE_PATH}")
-    return [line.strip() for line in KNOWLEDGE_BASE_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-
-def _chunk_rules(rules: list[str]) -> list[str]:
-    return rules
+    return [
+        line.strip()
+        for line in KNOWLEDGE_BASE_PATH.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def initialize_knowledge_base() -> None:
-    rules = _chunk_rules(_load_rules())
+    rules = _load_rules()
     collection = _get_collection()
 
-    existing_count = collection.count()
-    if existing_count > 0:
+    if collection.count() > 0:
         return
 
-    embeddings = _get_model().encode(rules).tolist()
-    ids = [f"rule-{index}" for index in range(1, len(rules) + 1)]
-    metadatas = [{"rule_number": index} for index in range(1, len(rules) + 1)]
+    embeddings = [get_embedding(rule) for rule in rules]
+    ids = [f"rule-{i}" for i in range(1, len(rules) + 1)]
+    metadatas = [{"rule_number": i} for i in range(1, len(rules) + 1)]
 
     collection.add(
         ids=ids,
@@ -65,14 +62,16 @@ def initialize_knowledge_base() -> None:
 
 def query_relevant_rules(design_metadata: dict[str, Any], top_k: int = 5) -> list[str]:
     collection = _get_collection()
+
     if collection.count() == 0:
         initialize_knowledge_base()
 
     query_text = json.dumps(design_metadata, sort_keys=True)
-    query_embedding = _get_model().encode([query_text]).tolist()[0]
+    query_embedding = get_embedding(query_text)
 
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=top_k,
     )
+
     return results.get("documents", [[]])[0]
