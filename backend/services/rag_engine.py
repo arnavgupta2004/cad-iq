@@ -28,6 +28,10 @@ def _load_rules() -> list[str]:
     return _rules_cache
 
 
+def initialize_knowledge_base() -> None:
+    _load_rules()
+
+
 def query_relevant_rules(design_metadata: dict[str, Any], top_k: int = 5) -> list[str]:
     rules = _load_rules()
 
