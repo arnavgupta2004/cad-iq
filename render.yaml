@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cadiq-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: UPLOAD_DIR
+        value: /tmp/cadiq-uploads
+      - key: CHROMA_DB_PATH
+        value: /tmp/cadiq-chroma

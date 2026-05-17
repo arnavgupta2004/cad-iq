@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 KNOWLEDGE_BASE_PATH = BASE_DIR / "knowledge_base" / "design_rules.txt"
-CHROMA_DB_PATH = BASE_DIR / "chroma_db"
+CHROMA_DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(BASE_DIR / "chroma_db")))
 COLLECTION_NAME = "design_rules"
 MODEL_NAME = "all-MiniLM-L6-v2"
 

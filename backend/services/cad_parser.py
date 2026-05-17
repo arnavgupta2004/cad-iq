@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -8,10 +9,9 @@ from uuid import uuid4
 import trimesh
 from fastapi import UploadFile
 
-UPLOAD_DIR = Path(__file__).resolve().parents[1] / "uploads"
-IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
+_BASE_DIR = Path(__file__).resolve().parents[1]
+UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", str(_BASE_DIR / "uploads")))
 STL_EXTENSIONS = {".stl"}
-CAD_EXTENSIONS = {".step", ".stp", ".iges", ".igs"}
 
 
 class ParseError(Exception):
@@ -48,35 +48,14 @@ async def handle_upload(file: UploadFile) -> dict[str, Any]:
     saved_path = await save_upload_file(file)
     suffix = saved_path.suffix.lower()
 
-    if suffix in STL_EXTENSIONS:
-        return parse_stl(saved_path)
-    if suffix in IMAGE_EXTENSIONS:
-        return parse_image(saved_path)
-    if suffix in CAD_EXTENSIONS:
-        return parse_step_or_iges(saved_path)
+    if suffix not in STL_EXTENSIONS:
+        saved_path.unlink(missing_ok=True)
+        raise ParseError(
+            "Only STL mesh files are supported. Export your CAD model as STL and try again.",
+            status_code=415,
+        )
 
-    saved_path.unlink(missing_ok=True)
-    raise ParseError(
-        "Unsupported file format. Please upload STL, STEP, IGES, PNG, or JPG files.",
-        status_code=415,
-    )
-
-
-def parse_image(path: Path) -> dict[str, Any]:
-    return {
-        "type": "image",
-        "filename": path.name,
-        "stored_path": str(path),
-    }
-
-
-def parse_step_or_iges(path: Path) -> dict[str, Any]:
-    return {
-        "type": "step",
-        "filename": path.name,
-        "stored_path": str(path),
-        "note": "geometry extraction pending",
-    }
+    return parse_stl(saved_path)
 
 
 def parse_stl(path: Path) -> dict[str, Any]:
@@ -103,7 +82,6 @@ def parse_stl(path: Path) -> dict[str, Any]:
         return {
             "type": "stl",
             "filename": path.name,
-            "stored_path": str(path),
             "bounding_box": {
                 "x": round(float(extents[0]), 6),
                 "y": round(float(extents[1]), 6),

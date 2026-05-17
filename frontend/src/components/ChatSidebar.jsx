@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { apiUrl } from "../lib/api";
+
 export default function ChatSidebar({ designMetadata, validationResult }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -24,7 +26,7 @@ export default function ChatSidebar({ designMetadata, validationResult }) {
     setIsSending(true);
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(apiUrl("/chat"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

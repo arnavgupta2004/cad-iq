@@ -1,12 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
-function fileExtension(file) {
-  const parts = file?.name?.toLowerCase().split(".") || [];
-  return parts.length > 1 ? `.${parts.pop()}` : "";
-}
+import { isStlFile } from "../lib/validateStl";
 
 function frameGeometry({ geometry, camera, controls }) {
   geometry.computeBoundingBox();
@@ -32,24 +29,14 @@ function frameGeometry({ geometry, camera, controls }) {
 
 export default function ModelViewer({ file }) {
   const mountRef = useRef(null);
-  const extension = fileExtension(file);
-  const imageUrl = useMemo(() => {
-    if (!file || ![".png", ".jpg", ".jpeg"].includes(extension)) {
-      return null;
-    }
-    return URL.createObjectURL(file);
-  }, [file, extension]);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [imageUrl]);
+    setLoadError(null);
+  }, [file]);
 
   useEffect(() => {
-    if (!file || extension !== ".stl" || !mountRef.current) {
+    if (!file || !isStlFile(file) || !mountRef.current) {
       return undefined;
     }
 
@@ -103,7 +90,9 @@ export default function ModelViewer({ file }) {
         renderFrame();
       },
       undefined,
-      undefined
+      () => {
+        setLoadError("Could not render this STL in the browser preview.");
+      }
     );
 
     const handleResize = () => {
@@ -131,31 +120,23 @@ export default function ModelViewer({ file }) {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [file, extension]);
+  }, [file]);
 
   let content = (
     <div className="flex h-[360px] items-center justify-center rounded-3xl border border-[#4f8ef7]/20 bg-[#0f1117] text-[#9ca3af]">
-      No model loaded
+      Upload an STL file to preview geometry here.
     </div>
   );
 
-  if (imageUrl) {
+  if (loadError) {
     content = (
-      <div className="overflow-hidden rounded-3xl border border-[#4f8ef7]/20 bg-[#0f1117]">
-        <img src={imageUrl} alt={file.name} className="h-[360px] w-full object-contain" />
+      <div className="flex h-[360px] flex-col items-center justify-center rounded-3xl border border-red-500/30 bg-[#0f1117] px-6 text-center">
+        <p className="text-lg font-medium text-white">Preview failed</p>
+        <p className="mt-3 max-w-md text-sm leading-6 text-[#9ca3af]">{loadError}</p>
       </div>
     );
-  } else if (file && extension === ".stl") {
+  } else if (file && isStlFile(file)) {
     content = <div ref={mountRef} className="h-[360px] overflow-hidden rounded-3xl border border-[#4f8ef7]/20 bg-[#0f1117]" />;
-  } else if (file) {
-    content = (
-      <div className="flex h-[360px] flex-col items-center justify-center rounded-3xl border border-[#4f8ef7]/20 bg-[#0f1117] px-6 text-center text-[#9ca3af]">
-        <p className="text-lg font-medium text-white">Preview unavailable</p>
-        <p className="mt-3 max-w-md text-sm leading-6">
-          3D preview is available for STL files, and inline preview is available for PNG and JPG uploads.
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -165,7 +146,7 @@ export default function ModelViewer({ file }) {
           <p className="text-xs uppercase tracking-[0.32em] text-[#4f8ef7]">Model Viewer</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">Geometry Preview</h2>
         </div>
-        <p className="text-sm text-[#9ca3af]">Rotate, zoom, and pan STL files directly in the browser.</p>
+        <p className="text-sm text-[#9ca3af]">Rotate, zoom, and pan the uploaded STL mesh.</p>
       </div>
       {content}
     </section>

@@ -9,7 +9,7 @@ import google.generativeai as genai
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-MODEL_NAME = "gemini-1.5-pro"
+MODEL_NAME = "gemini-2.5-flash"
 PROMPT_TEMPLATE = """You are a senior automotive design validation engineer with 20 years of experience.
        
        Analyze the following CAD design metadata against the provided design standards and rules.

@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -18,9 +19,17 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="CAD-IQ Backend", lifespan=lifespan)
 
+def _allowed_origins() -> list[str]:
+    raw = os.environ.get(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    )
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

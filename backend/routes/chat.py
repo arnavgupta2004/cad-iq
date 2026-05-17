@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from services.claude_service import ValidationError, chat_with_context
+from services.gemini_service import ValidationError, chat_with_context
 
 router = APIRouter(prefix="", tags=["chat"])
 

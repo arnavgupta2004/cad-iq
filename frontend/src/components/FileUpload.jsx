@@ -1,20 +1,13 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-const ACCEPTED_EXTENSIONS = [".stl", ".step", ".iges", ".png", ".jpg", ".jpeg", ".stp", ".igs"];
-
-function extensionForFile(file) {
-  const parts = file.name.toLowerCase().split(".");
-  return parts.length > 1 ? `.${parts.pop()}` : "";
-}
+import { STL_EXTENSION, isStlFile, validateStlFile } from "../lib/validateStl";
 
 export default function FileUpload({ onValidationComplete, onValidationStart, onValidationStateChange, isProcessing }) {
   const inputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [status, setStatus] = useState("Upload a CAD file or image to validate it against automotive design rules.");
+  const [status, setStatus] = useState("Upload an STL mesh to extract geometry and run a full compliance analysis.");
   const [dotCount, setDotCount] = useState(0);
-
-  const accept = useMemo(() => ACCEPTED_EXTENSIONS.join(","), []);
 
   function setProcessingState(active) {
     onValidationStateChange?.(active);
@@ -24,9 +17,8 @@ export default function FileUpload({ onValidationComplete, onValidationStart, on
   }
 
   async function processFile(file) {
-    const extension = extensionForFile(file);
-    if (!ACCEPTED_EXTENSIONS.includes(extension)) {
-      const message = "Could not parse this file format. Try uploading an STL or image.";
+    if (!isStlFile(file)) {
+      const message = "Only STL files are supported. Export your CAD model as STL and try again.";
       setStatus(message);
       toast.error(message);
       return;
@@ -37,39 +29,15 @@ export default function FileUpload({ onValidationComplete, onValidationStart, on
     setStatus(`Uploading ${file.name}...`);
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", file);
-
-      const uploadResponse = await fetch("http://localhost:8000/upload", {
-        method: "POST",
-        body: uploadFormData,
-      });
-
-      const uploadData = await uploadResponse.json();
-      if (!uploadResponse.ok) {
-        throw new Error(uploadData.detail || "Could not parse this file format. Try uploading an STL or image.");
-      }
-
+      setStatus("Extracting mesh geometry...");
+      const result = await validateStlFile(file);
       setStatus("Analyzing design with AI...");
-      const validateResponse = await fetch("http://localhost:8000/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(uploadData),
-      });
-
-      const validationData = await validateResponse.json();
-      if (!validateResponse.ok) {
-        throw new Error(validationData.detail || "Validation failed. Please try again.");
-      }
-
-      onValidationComplete?.({ file, uploadData, validationData });
+      onValidationComplete?.(result);
       setStatus(`Validation complete for ${file.name}.`);
       toast.success("Design validated successfully.");
     } catch (error) {
       onValidationComplete?.(null);
-      const message = error.message || "API request failed. Please try again.";
+      const message = error.message || "Validation failed. Please try again.";
       setStatus(message);
       toast.error(message);
     } finally {
@@ -115,7 +83,7 @@ export default function FileUpload({ onValidationComplete, onValidationStart, on
         <input
           ref={inputRef}
           type="file"
-          accept={accept}
+          accept={STL_EXTENSION}
           className="hidden"
           disabled={isProcessing}
           onChange={(event) => handleFiles(event.target.files)}
@@ -123,9 +91,10 @@ export default function FileUpload({ onValidationComplete, onValidationStart, on
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#4f8ef7]/15 text-[#4f8ef7]">
           <span className="text-2xl">+</span>
         </div>
-        <h2 className="text-lg font-semibold text-white">Upload CAD File</h2>
+        <h2 className="text-lg font-semibold text-white">Upload STL Mesh</h2>
         <p className="mt-2 text-sm leading-6 text-[#9ca3af]">
-          Drag and drop STL, STEP, IGES, PNG, or JPG files here, or click to browse.
+          Drag and drop an STL file here, or click to browse. Geometry preview, compliance score, findings, and chat all
+          run on real mesh data.
         </p>
         {isProcessing ? (
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[#4f8ef7]">
@@ -140,7 +109,7 @@ export default function FileUpload({ onValidationComplete, onValidationStart, on
         disabled={isProcessing}
         className="mt-4 w-full rounded-2xl border border-[#4f8ef7]/40 bg-[#4f8ef7] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#6aa0f8] disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-700 disabled:text-[#9ca3af]"
       >
-        {isProcessing ? "Processing..." : "Choose File"}
+        {isProcessing ? "Processing..." : "Choose STL File"}
       </button>
       <p className="mt-4 text-sm text-[#9ca3af]">{status}</p>
     </section>
